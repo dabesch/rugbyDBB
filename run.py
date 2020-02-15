@@ -3,7 +3,7 @@ The main run script for the ETL process. Requires correctly set up database and 
 This process currently not set for multi processes, but the server can handle such performance.
 """
 import database
-from scrapes import players, playerStats
+from scrapes import players, playerStats, grounds
 from datetime import datetime as dt
 
 
@@ -33,13 +33,16 @@ def scrapePlayers(playerid):
     print(f'Finished {playerid}:{dt.now()}')
 
 
-# todo: not started tables: Matches, match stats, Stadiums
+# todo: not started tables: Matches, match stats
 
 
 if __name__ == '__main__':
     # EXAMPLE RUN
     # todo: set up process to run on more than just one playerID
-    tables = ['playerstats', 'players']
-    checkTables(tables)
-    playerid = '11663'
-    scrapePlayers(playerid)
+    #tables = ['playerstats', 'players', 'grounds']
+    #checkTables(tables)
+    #playerid = '11663'
+    #scrapePlayers(playerid)
+
+    grounds.scrape('16727')
+    grounds.scrape('16145')
