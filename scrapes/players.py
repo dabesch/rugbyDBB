@@ -123,4 +123,3 @@ def convertUnits(measure, category):
 
 
 # todo: later processing stage for relations key, data stored in JSON format currently
-scrape('test1')
