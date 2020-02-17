@@ -1,6 +1,6 @@
 """ players.py
 ETL for the player summary page.
-Scrapes the webpage for a player and writes it to the players table in the database.
+Scrapes the web page for a player and writes it to the playerStats table in the database.
 Cleans the data throughout the process. Produces a field called relationsJSON which is a field for a later ETL process.
 """
 import requests
@@ -11,13 +11,12 @@ from database import executeQuery, createSQL
 
 def scrape(playerID):
     """
-
-    :param playerID:
-    :return:
+    Collects the player summary and inputs the results to the database
+    :param playerID: The Id of the player to collect summary data from
+    :return: Executes the results and sends the results to the database
     """
     url = f'http://en.espn.co.uk/statsguru/rugby/player/{playerID}.html'
     response = requests.get(url).text
-    # response = open('./html/playerExample.html')
     soup = BeautifulSoup(response, 'lxml')
 
     desc = soup.find_all('div', class_="scrumPlayerDesc")
@@ -37,9 +36,9 @@ def scrape(playerID):
 
 def descStrip(desc):
     """
-
-    :param desc:
-    :return:
+    Separates out each of the titles and values form the player description and produces the results as a dictionary
+    :param desc: A description object which contains the results 'scrumPlayerDesc' class
+    :return: a dictionary object of the processed 'scrumPlayerDesc' class
     """
     playerDict = {}
     empty = 0
@@ -79,8 +78,13 @@ def getRelations(relations):
     return ' '.join(relList), json
 
 
-# todo: finish cleaning this dictionary
 def cleanDesc(playerDict):
+    """
+    Cleans certain fields so that they will fit with the database. Also splits some fields to create new fields such as
+    names and hometown.
+    :param playerDict: the playerDict dictionary object which needs cleaning
+    :return: the processed and cleaned dictionary object
+    """
     if 'Born' in playerDict:
         dob = playerDict['Born'].split(',')[:2]
         home = playerDict['Born'].split(',')[2:]
@@ -120,6 +124,5 @@ def convertUnits(measure, category):
         f, i = [m for m in measure.split(' ') if m.isdigit()]
         height = (int(f) * 30.48) + int(i) * 2.54
         return round(height, 2)
-
 
 # todo: later processing stage for relations key, data stored in JSON format currently

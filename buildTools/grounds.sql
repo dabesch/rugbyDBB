@@ -1,5 +1,5 @@
 /* grounds.sql
-SQL script for building the grounds table
+SQL script for building the grounds table. Further fields may be added over time
 */
 
 create table grounds (groundid int primary key

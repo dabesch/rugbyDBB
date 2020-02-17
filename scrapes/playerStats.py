@@ -1,3 +1,8 @@
+""" playersStats.py
+ETL for the player stats from their relative match stats page.
+Scrapes the web page for a player and writes it to the players table in the database.
+Each player has a entry for each match they played in.
+"""
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -5,10 +10,14 @@ from database import executeQuery, createSQL
 
 
 def scrape(playerID):
+    """
+    Collects the player stats for all matched and inputs the results to the database
+    :param playerID: The Id of the player to collect summary data from
+    :return: Executes the results and sends the results to the database
+    """
     url = f'http://en.espn.co.uk/statsguru/rugby/player/{playerID}.html?class=1;template=results;type=player;view=match'
     response = requests.get(url).text
     print(f'Connection made player:{playerID}:{datetime.now()}')
-    #response = open('html/player.html')
     soup = BeautifulSoup(response, 'lxml')
 
     tb = soup.find_all('table', {'class': 'engineTable'})[2]
@@ -48,6 +57,11 @@ def rowAppend(row, playerID):
 
 
 def hrefCat(hrefs):
+    """
+    Process the href object and extracts out id's for later use, specifically match and ground id's
+    :param hrefs: a soup object which will contain href links to other parts of the site - which contain id values
+    :return: matchLink, matchID and groundID values
+    """
     matchLink = None
     matchID = None
     groundID = None
