@@ -7,6 +7,7 @@ create table players (playerID int primary key
 ,Fullname varchar
 , Firstname varchar
 , Lastname varchar
+,initName varchar
 ,Born timestamp
 ,Majorteams varchar
 , Position varchar

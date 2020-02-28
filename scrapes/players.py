@@ -100,6 +100,7 @@ def cleanDesc(playerDict):
     playerDict.pop('Currentage', None)
     playerDict['Firstname'] = playerDict['Fullname'].split(' ')[0]
     playerDict['Lastname'] = playerDict['Fullname'].split(' ')[-1]
+    playerDict['initName'] = f"{''.join([f[0] for f in playerDict['Fullname'].split(' ')[:-1]])} {playerDict['Lastname']}"
 
     for meas in ['Height', 'Weight']:
         playerDict[meas] = convertUnits(playerDict[meas], meas)
