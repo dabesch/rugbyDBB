@@ -1,4 +1,6 @@
 pandas>=0.25.2
 requests>=2.21.0
 beautifulsoup4>=4.7.1
+bs4
+lxml
 psycopg2>=2.7.6.1
