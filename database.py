@@ -1,36 +1,42 @@
 """ database.py
 Contains all of the database tools needed to connect and write SQL queries against my databases.
-Designed for a Postgresql 11 server, authentication is stored separately
+Designed for a Postgresql 11 server, authentication is stored separately in the file 'config'
 """
 
 import psycopg2
 from pandas import read_csv, read_sql
 
 
-def conString(db):
+def conString(db='dev01'):
     """
     Requires the 'config' file for credentials
     :param db: database for the connection string
     :return: creates a connection string for connecting to the server
     """
     host = 'raspberrypi:5432'
-    conf = read_csv('config', index_col='db').loc[db]
+    conf = read_csv('../config', index_col='db').loc[db]
     uid = conf['uid']
     pwd = conf['pwd']
 
-    return f'postgresql://{uid}:{pwd}@{host}/dev01'
+    return f'postgresql://{uid}:{pwd}@{host}/{db}'
 
 
 def createSQL(dictObject, table):
     """
     Requires only one value per key
-    :param matchDict: A dictionary object which has keys which are equivalent to column names on a table
+    :param dictObject: A dictionary object which has keys which are equivalent to column names on a table
     :param table: the table which is being written to
     :return: a SQL text string which can be executed
     """
     columns = []
     values = []
-    [(columns.append(d[0]), values.append(str(d[1]))) for d in dictObject.items()]
+    for col, val in dictObject.items():
+        columns.append(col)
+        if type(val) == str:
+            # Handle errors with apostrophes
+            val = val.replace("'", "''")
+        values.append(str(val))
+
     values = "','".join(values)
     sql = f"INSERT INTO {table} ({', '.join(columns)}) \nVALUES ('{values}')"
     return sql
@@ -64,3 +70,17 @@ def missingTable(table, db='dev01'):
     # uses the postgres function to_regclass()
     results = read_sql(f"SELECT to_regclass('public.{table}')", connectionString)
     return results.to_regclass[0] != table
+
+
+def writeDataFrame(df, table):
+    """
+    :param df: A pandas dataframe object with columns which match the output table in the database
+    :param table: name of table being written to
+    :param db: the database
+    :return: writes the contents of a dataframe to an existing table
+    """
+    for i, row in df.iterrows():
+        entry = dict(row)
+        # write row
+        sql = createSQL(entry, table)
+        executeQuery(sql)
