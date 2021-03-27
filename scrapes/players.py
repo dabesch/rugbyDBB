@@ -9,38 +9,38 @@ from pandas import to_datetime
 from database import executeQuery, createSQL
 
 
-def scrape(playerID):
+def scrape(player_id):
     """
     Collects the player summary and inputs the results to the database
-    :param playerID: The Id of the player to collect summary data from
+    :param player_id: The Id of the player to collect summary data from
     :return: Executes the results and sends the results to the database
     """
-    url = f'http://en.espn.co.uk/statsguru/rugby/player/{playerID}.html'
+    url = f'http://en.espn.co.uk/statsguru/rugby/player/{player_id}.html'
     response = requests.get(url).text
     soup = BeautifulSoup(response, 'lxml')
 
     desc = soup.find_all('div', class_="scrumPlayerDesc")
 
-    playerDict = descStrip(desc)
+    player_dict = strip_description(desc)
 
     caption = soup.find('caption', {'class': 'ScrumSectionHeader'})
     name = caption.find('div', {'class': 'scrumPlayerName'}).text
     nation = caption.find('div', {'class': 'scrumPlayerCountry'}).text
-    playerDict['name'] = name.strip()
-    playerDict['nation'] = nation.strip()
-    playerDict['playerID'] = playerID
+    player_dict['name'] = name.strip()
+    player_dict['nation'] = nation.strip()
+    player_dict['playerID'] = player_id
 
-    sql = createSQL(playerDict, 'players')
+    sql = createSQL(player_dict, 'players')
     executeQuery(sql)
 
 
-def descStrip(desc):
+def strip_description(desc):
     """
     Separates out each of the titles and values form the player description and produces the results as a dictionary
     :param desc: A description object which contains the results 'scrumPlayerDesc' class
     :return: a dictionary object of the processed 'scrumPlayerDesc' class
     """
-    playerDict = {}
+    player_dict = {}
     empty = 0
     for d in desc:
         tup = d.contents
@@ -51,17 +51,17 @@ def descStrip(desc):
             label = 'empty'
         if len(tup) == 2:
             value = tup[1].strip()
-            playerDict[label] = value
+            player_dict[label] = value
         elif label == 'Relations':
 
-            value, valueJSON = getRelations(d)
-            playerDict[label] = value
-            playerDict['RelationsJSON'] = valueJSON
+            value, valueJSON = get_relations(d)
+            player_dict[label] = value
+            player_dict['RelationsJSON'] = valueJSON
     print(f'{empty} empty labels')
-    return cleanDesc(playerDict)
+    return clean_description(player_dict)
 
 
-def getRelations(relations):
+def get_relations(relations):
     """
     Takes the object containing multiple spans and returns cleaned results
     :param relations: The relations fields of the summary page
@@ -69,16 +69,16 @@ def getRelations(relations):
              later for creating a relations table.
     """
     json = {}
-    relList = []
+    rel_list = []
     for r in relations.find_all('span'):
         json[r.text] = r.a['href'].split('/')[-1].split('.')[0]
-        relList.append(r.text)
+        rel_list.append(r.text)
     json = str(json).replace("'", '"')
 
-    return ' '.join(relList), json
+    return ' '.join(rel_list), json
 
 
-def cleanDesc(playerDict):
+def clean_description(playerDict):
     """
     Cleans certain fields so that they will fit with the database. Also splits some fields to create new fields such as
     names and hometown.
@@ -102,12 +102,12 @@ def cleanDesc(playerDict):
     playerDict['Lastname'] = playerDict['Fullname'].split(' ')[-1]
 
     for meas in ['Height', 'Weight']:
-        playerDict[meas] = convertUnits(playerDict[meas], meas)
+        playerDict[meas] = convert_units(playerDict[meas], meas)
 
     return playerDict
 
 
-def convertUnits(measure, category):
+def convert_units(measure, category):
     """
     ESPN stores measurements in imperial units, this function converts to metric
     :param measure: the measurement string, either
