@@ -25,19 +25,19 @@ def scrape(groundID):
     groundDict['groundLocation'] = header.find('div', {'class': 'scrumPlayerCountry'}).text.strip()
 
     desc = soup.find_all('div', {'class': 'scrumPlayerDesc'})
-    groundDict.update(descStrip(desc))
+    groundDict.update(strip_description(desc))
 
     sql = createSQL(groundDict, 'grounds')
     executeQuery(sql)
 
 
-def descStrip(desc):
+def strip_description(desc):
     """
     Separates out each of the titles and values form the player description and produces the results as a dictionary
     :param desc: A description object which contains the results 'scrumPlayerDesc' class
     :return: a dictionary object of the processed 'scrumPlayerDesc' class
     """
-    descDict = {}
+    desc_dict = {}
     un = 0
     i = 0
     for d in desc:
@@ -53,13 +53,13 @@ def descStrip(desc):
         elif label == 'Home team(s)':
             label = 'Hometeam'
         value = d.text.replace(label, '').strip()
-        descDict[label.replace(' ', '')] = value
+        desc_dict[label.replace(' ', '')] = value
         i += 1
     # Clean values
-    if descDict['address']:
-        descDict['address'] = descDict['address'].replace('\n', ', ')
-        descDict['postcode'] = descDict['address'].split(',')[-1].strip()
-    if descDict['Capacity']:
-        descDict['Capacity'] = descDict['Capacity'].replace(',', '')
-    descDict.pop('Time', None)
-    return descDict
+    if desc_dict['address']:
+        desc_dict['address'] = desc_dict['address'].replace('\n', ', ')
+        desc_dict['postcode'] = desc_dict['address'].split(',')[-1].strip()
+    if desc_dict['Capacity']:
+        desc_dict['Capacity'] = desc_dict['Capacity'].replace(',', '')
+    desc_dict.pop('Time', None)
+    return desc_dict
