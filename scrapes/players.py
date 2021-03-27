@@ -6,7 +6,7 @@ Cleans the data throughout the process. Produces a field called relationsJSON wh
 import requests
 from bs4 import BeautifulSoup
 from pandas import to_datetime
-from database import executeQuery, createSQL
+from database import execute_query, create_SQL
 
 
 def scrape(player_id):
@@ -30,8 +30,8 @@ def scrape(player_id):
     player_dict['nation'] = nation.strip()
     player_dict['playerID'] = player_id
 
-    sql = createSQL(player_dict, 'players')
-    executeQuery(sql)
+    sql = create_SQL(player_dict, 'players')
+    execute_query(sql)
 
 
 def strip_description(desc):

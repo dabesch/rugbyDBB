@@ -6,7 +6,7 @@ be NULLs
 """
 import requests
 from bs4 import BeautifulSoup
-from database import executeQuery, createSQL
+from database import execute_query, create_SQL
 
 
 def scrape(groundID):
@@ -27,8 +27,8 @@ def scrape(groundID):
     desc = soup.find_all('div', {'class': 'scrumPlayerDesc'})
     groundDict.update(strip_description(desc))
 
-    sql = createSQL(groundDict, 'grounds')
-    executeQuery(sql)
+    sql = create_SQL(groundDict, 'grounds')
+    execute_query(sql)
 
 
 def strip_description(desc):

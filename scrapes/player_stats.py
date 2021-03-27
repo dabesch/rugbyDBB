@@ -7,7 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 from pandas import to_datetime
 
-from database import executeQuery, createSQL
+from database import execute_query, create_SQL
 
 
 def scrape(player_id):
@@ -26,8 +26,8 @@ def scrape(player_id):
     # Process each row in the table
     for r in rows:
         results = process_row(r, player_id)
-        sql = createSQL(results, 'playerStats')
-        executeQuery(sql)
+        sql = create_SQL(results, 'playerStats')
+        execute_query(sql)
 
 
 def process_row(row, player_id):

@@ -7,7 +7,7 @@ import psycopg2
 from pandas import read_csv, read_sql
 
 
-def conString(db):
+def create_connection_string(db):
     """
     Requires the 'config' file for credentials
     :param db: database for the connection string
@@ -21,30 +21,30 @@ def conString(db):
     return f'postgresql://{uid}:{pwd}@{host}/dev01'
 
 
-def createSQL(dictObject, table):
+def create_SQL(dict_object, table):
     """
     Requires only one value per key
-    :param matchDict: A dictionary object which has keys which are equivalent to column names on a table
+    :param dict_object: A dictionary object which has keys which are equivalent to column names on a table
     :param table: the table which is being written to
     :return: a SQL text string which can be executed
     """
     columns = []
     values = []
-    [(columns.append(d[0]), values.append(str(d[1]))) for d in dictObject.items()]
+    [(columns.append(d[0]), values.append(str(d[1]))) for d in dict_object.items()]
     values = "','".join(values)
     sql = f"INSERT INTO {table} ({', '.join(columns)}) \nVALUES ('{values}')"
     return sql
 
 
-def executeQuery(sql, db='dev01'):
+def execute_query(sql, db='dev01'):
     """
     :param sql: the SQL string to be executed
     :param db: the database to be connected to
-    :return: exectutes the SQL string on the connection supplied. Will not return SELECT results.
+    :return: executes the SQL string on the connection supplied. Will not return SELECT results.
     """
-    connectionString = conString(db)
+    connection_string = create_connection_string(db)
 
-    conn = psycopg2.connect(connectionString)
+    conn = psycopg2.connect(connection_string)
     crsr = conn.cursor()
     for query in [s for s in sql.split(';') if s != '']:
         crsr.execute(query)
@@ -53,14 +53,14 @@ def executeQuery(sql, db='dev01'):
     conn.close()
 
 
-def missingTable(table, db='dev01'):
+def missing_table(table, db='dev01'):
     """
     :param table: table to check the presence of
     :param db: the database to be connected to
     :return: a boolean result if the table is present within the selected table. True if missing, False if present
     """
     table = table.lower()
-    connectionString = conString(db)
+    connection_string = create_connection_string(db)
     # uses the postgres function to_regclass()
-    results = read_sql(f"SELECT to_regclass('public.{table}')", connectionString)
+    results = read_sql(f"SELECT to_regclass('public.{table}')", connection_string)
     return results.to_regclass[0] != table
