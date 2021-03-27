@@ -6,16 +6,17 @@ Each player has a entry for each match they played in.
 import requests
 from bs4 import BeautifulSoup
 from pandas import to_datetime
+
 from database import executeQuery, createSQL
 
 
-def scrape(playerID):
+def scrape(player_id):
     """
     Collects the player stats for all matched and inputs the results to the database
-    :param playerID: The Id of the player to collect summary data from
+    :param player_id: The Id of the player to collect summary data from
     :return: Executes the results and sends the results to the database
     """
-    url = f'http://en.espn.co.uk/statsguru/rugby/player/{playerID}.html?class=1;template=results;type=player;view=match'
+    url = f'http://en.espn.co.uk/statsguru/rugby/player/{player_id}.html?class=1;template=results;type=player;view=match'
     response = requests.get(url).text
     soup = BeautifulSoup(response, 'lxml')
 
@@ -24,17 +25,17 @@ def scrape(playerID):
 
     # Process each row in the table
     for r in rows:
-        results = rowProcess(r, playerID)
+        results = process_row(r, player_id)
         sql = createSQL(results, 'playerStats')
         executeQuery(sql)
 
 
-def rowProcess(row, playerID):
+def process_row(row, player_id):
     """
     Takes a row from the player stats table, handles the "hidden" empty column by only including columns with values in
     the values object
     :param row: a row for a players performance in a match
-    :param playerID: the playerID of the player involved, this is only to create the dictionary entry
+    :param player_id: the playerID of the player involved, this is only to create the dictionary entry
     :return: a dictionary with all of the fields of the table
     """
     labels = ['pos', 'pts', 'tries', 'conv', 'pens', 'dropG', 'result', 'team', 'opposition', 'ground', 'matchDate',
@@ -42,31 +43,31 @@ def rowProcess(row, playerID):
     values = [i.text for i in row.find_all('td') if i.text != '']
     hrefs = [i['href'] for i in row.find_all('a', href=True)]
 
-    matchLink, matchID, groundID = hrefCat(hrefs)
+    matchLink, matchID, groundID = href_category(hrefs)
 
     # Create dict
-    matchDict = dict(matchlink=matchLink,
-                     matchID=matchID,
-                     groundID=groundID,
-                     playerID=playerID,
-                     )
-    for l, v in zip(labels, values):
-        matchDict[l] = v
+    match_dict = dict(matchlink=matchLink,
+                      matchID=matchID,
+                      groundID=groundID,
+                      playerID=player_id,
+                      )
+    for lab, val in zip(labels, values):
+        match_dict[lab] = val
 
     # Clean fields in dict
-    matchDict['matchDate'] = str(to_datetime(matchDict['matchDate']))
-    matchDict['opposition'] = matchDict['opposition'].strip('v ')
+    match_dict['matchDate'] = str(to_datetime(match_dict['matchDate']))
+    match_dict['opposition'] = match_dict['opposition'].strip('v ')
 
-    if '(' in matchDict['pos']:
-        matchDict['pos'] = matchDict['pos'].strip('()')
-        matchDict['startGame'] = 0
+    if '(' in match_dict['pos']:
+        match_dict['pos'] = match_dict['pos'].strip('()')
+        match_dict['startGame'] = 0
     else:
-        matchDict['startGame'] = 1
+        match_dict['startGame'] = 1
 
-    return matchDict
+    return match_dict
 
 
-def hrefCat(hrefs):
+def href_category(hrefs):
     """
     Process the href object and extracts out id's for later use, specifically match and ground id's
     :param hrefs: a soup object which will contain href links to other parts of the site - which contain id values
