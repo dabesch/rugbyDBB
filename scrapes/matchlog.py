@@ -6,13 +6,13 @@ from bs4 import BeautifulSoup
 from database import createSQL, executeQuery, writeDataFrame
 
 
-def readNotes(notes, matchID):
+def read_notes(notes, matchID):
     """
     :param notes: Soup object which contains results from the 'Notes' tab
     :param matchID: the match id
     :return: returns a complete dictionary of the notes from the match
     """
-    notesDict = {'match_id': matchID}
+    notes_dict = {'match_id': matchID}
 
     for n in notes:
         res = n.text.strip().split('\n')
@@ -23,16 +23,16 @@ def readNotes(notes, matchID):
             values = "".join(res[1:])
             if title == 'Referee' or title == 'Ground_name':
                 href = n.a['href'].split('/')[-1].split('.')[0]
-                notesDict[f'{title}_id'] = int(href)
-            notesDict[title] = values
+                notes_dict[f'{title}_id'] = int(href)
+            notes_dict[title] = values
         elif 'Attendance' in res[0]:
-            notesDict['attendance'] = res[0].split(' ')[-1]
+            notes_dict['attendance'] = res[0].split(' ')[-1]
 
-    return notesDict
+    return notes_dict
 
 
 # todo output needs finalizing, currently 2 dictionaries
-def readTeams(teams):
+def read_teams(teams):
     homestats = {'home': True}
     awaystats = {'home': False}
     for t in teams.find_all('tr'):
@@ -48,13 +48,13 @@ def readTeams(teams):
                     awaystats[items[sp:][0]] = items[sp:][1].strip()
         else:
             break
-    teamDict = {'home': homestats, 'away': awaystats}
-    return teamDict
+    team_dict = {'home': homestats, 'away': awaystats}
+    return team_dict
 
 
 # todo not yet used but should be used with readTeams above
-def parseScore(string, matchID, nation, sType):
-    scD = []
+def parse_score(string, matchID, nation, sType):
+    score_dict = []
     for sc in string.split('),'):
         results = sc.split(' (')
         scorer = results[0].strip()
@@ -62,13 +62,13 @@ def parseScore(string, matchID, nation, sType):
 
         if len(scores) > 1:
             for s in scores:
-                scD.append([matchID, nation, scorer, sType, int(s.strip(')'))])
+                score_dict.append([matchID, nation, scorer, sType, int(s.strip(')'))])
         else:
-            scD.append([matchID, nation, scorer, sType, int(scores[0].strip(')'))])
-    return scD
+            score_dict.append([matchID, nation, scorer, sType, int(scores[0].strip(')'))])
+    return score_dict
 
 
-def matchStats(matchStats, teamScores, matchID):
+def match_stats(matchStats, teamScores, matchID):
     """
     :param matchStats: soup object which contains the match stats for the overall game
             (separate from individual team stats)
@@ -84,10 +84,10 @@ def matchStats(matchStats, teamScores, matchID):
             txt = [b.text.strip() for b in blktxt]
 
             stats[title] = txt
-    return processMatchStats(stats, matchID)
+    return process_match_stats(stats, matchID)
 
 
-def processMatchStats(stats, matchID):
+def process_match_stats(stats, matchID):
     """
 
     :param stats: A dictionary object which contains the output of matchStats() but is not yet cleaned
@@ -134,7 +134,7 @@ def processMatchStats(stats, matchID):
     return pd.DataFrame(stats)
 
 
-def teamStats(teamStats, matchID, nation):
+def team_stats(teamStats, matchID, nation):
     """
 
     :param teamStats: soup object which contains the table of team stats
@@ -210,13 +210,13 @@ def scrape(matchID):
 
         for tab in side:
             if tab.h2.text == 'Notes':
-                notes = readNotes(tab.find_all('tr'), matchID)
+                notes = read_notes(tab.find_all('tr'), matchID)
                 notesCheck += 1
             elif tab.h2.text == 'Teams':
-                teamScores = readTeams(tab.find('table'))
+                teamScores = read_teams(tab.find('table'))
                 teamCheck += 1
             elif tab.h2.text == 'Match stats':
-                mStats = matchStats(tab.find('table'), teamScores, matchID)
+                mStats = match_stats(tab.find('table'), teamScores, matchID)
                 matchStatsCheck += 1
             elif tab.h2.text == 'Timeline':
                 timelineStats = tab.find('table')
@@ -225,9 +225,9 @@ def scrape(matchID):
             elif 'stats' in tab.h2.text:
                 nation = tab.h2.text.split(' ')[0]
                 if teamStatsCheck == 0:
-                    tStats = teamStats(tab.find('table'), matchID, nation)
+                    tStats = team_stats(tab.find('table'), matchID, nation)
                 else:
-                    tStats = pd.concat([tStats, teamStats(tab.find('table'), matchID, nation)])
+                    tStats = pd.concat([tStats, team_stats(tab.find('table'), matchID, nation)])
                 teamStatsCheck += 1
 
     # log of reads completed
@@ -246,6 +246,7 @@ def scrape(matchID):
     executeQuery(createSQL(resultsLookup, 'match_details_log'))
     writeDataFrame(mStats, table='player_stats_match')
     writeDataFrame(tStats, table='team_match_stats')
+
 
 # Run all the functions
 matchID = '300729'
